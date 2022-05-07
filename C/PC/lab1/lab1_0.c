@@ -303,4 +303,5 @@ void *OneInt()
 int main()
 {
 	struct RingInfo *ringInt = Create(sizeof(int), &sumInt, ZeroInt(), &multInt, OneInt(), &powInt);
+	return 0;
 }

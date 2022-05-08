@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bool.h>
+#include <stdbool.h>
+//#include <readline/readline.h>
 
 /*
 Многочлены
@@ -20,11 +21,53 @@ CpyPol (и ринг, и коэфы (под которые надо перевы�
 Добавить const
 */
 
+// 0.Readline
+
+char *readline(const char *a) {
+        char buf[81] = {0};
+        char *res = NULL;
+        int len = 0;
+        int n = 0;
+ 
+        printf("%s", a);
+ 
+        do {
+                n = scanf("%80[^\n]", buf);
+                if (n < 0) {
+                        if (!res) {
+                                return NULL;
+                        }
+                }
+                else if (n > 0) {
+                        int chunk_len = strlen(buf);
+                        int str_len = len + chunk_len;
+                        res = realloc(res, str_len + 1);
+                        memcpy(res + len, buf, chunk_len);
+                        len = str_len;
+                }
+                else {
+                        scanf("%*c");
+                }
+        } while (n > 0);
+ 
+        if (len > 0) {
+                res[len] = '\0';
+        }
+        else {
+                res = calloc(1, sizeof(char));
+        }
+ 
+        return res;
+}
+
 // 1.Ring
 
 struct RingInfo
 {
+	char* type;
 	size_t size;
+	void (*scan)(void *);
+	void (*print)(void *);
 	void *(*sum)(void *, void *);
 	void *zero;
 	void *(*mult)(void *, void *);
@@ -33,7 +76,10 @@ struct RingInfo
 };
 
 struct RingInfo *Create(
+	char* type,
 	size_t size,
+	void (*scan)(void *),
+	void (*print)(void *),
 	void *(*sum)(void *, void *),
 	void *zero,
 	void *(*mult)(void *, void *),
@@ -41,7 +87,10 @@ struct RingInfo *Create(
 	void *(*pow)(void *, int))
 {
 	struct RingInfo *ringInfo = malloc(sizeof(struct RingInfo));
+	ringInfo->type = type;
 	ringInfo->size = size;
+	ringInfo->scan = scan;
+	ringInfo->print = print;
 	ringInfo->sum = sum;
 	ringInfo->zero = zero;
 	ringInfo->mult = mult;
@@ -236,13 +285,58 @@ struct Polynomial *Comp(struct Polynomial *p1, struct Polynomial *p2)
 	return res;
 }
 
-/*struct Polynomial *Insert (struct RingInfo ringInfo)
+struct Polynomial *Input (struct RingInfo *ringInfo)
 {
-	int degree = 0;	
-	While()
-}*/
+	struct Polynomial *res = malloc(sizeof(struct Polynomial));
+	res->ringInfo = ringInfo;
+	int length = 0;
+	bool err = 0;
+	char *input = NULL;
+	do {
+			input = readline("Enter the degree of the polynomial:\n");
+			length = strlen(input);
+			for(int i = 0; i < length; i++) {
+				if((input[i] > '9') || (input[i] < '0')){
+					err = 1;
+					printf("Incorrect input\n");
+					break;
+				}
+			}
+	} while (err);
+	res->degree = atoi(input);
+	res->coefficients = malloc((res->degree + 1) * ringInfo->size);
+	for(int i = 0; i <= res->degree; i++) {
+		ringInfo->scan(res->coefficients + i * ringInfo->size); //здесь пока без фильтрации ввода
+	}
+	Cut(res);
+	return res;
+}
+
+void Output(struct Polynomial *output) {
+	printf("The degree of the polynomial is %d\n", output->degree);
+	printf("The coefficients are %s:\n", output->ringInfo->type);
+	for(int i = 0; i <= output->degree; i++) {
+		output->ringInfo->print(output->coefficients + i * output->ringInfo->size);
+		if(i != output->degree) {
+			printf(" ");
+		}
+	}
+	printf("\n");
+}
 
 // 3.int
+
+void scanInt(void *a)
+{
+	int *ia = (int *)a;
+	scanf("%d", ia);
+}
+
+void printInt(void *a)
+{
+	int *ia = (int *)a;
+	printf("%d", *ia);
+}
 
 void *sumInt(void *a1, void *a2)
 {
@@ -262,14 +356,14 @@ void *multInt(void *a1, void *a2)
 	return (void *)res;
 }
 
-void *powInt(void *p1, int n)
+void *powInt(void *a1, int n)
 {
-	int *ip1 = (int *)p1;
+	int *ia1 = (int *)a1;
 	int *res = malloc(sizeof(int));
 	*res = 1;
 	for (int i = 0; i < n; i++)
 	{
-		*res *= *ip1;
+		*res *= *ia1;
 	}
 	return (void *)res;
 }
@@ -304,5 +398,6 @@ void *OneInt()
 
 int main()
 {
-	struct RingInfo *ringInt = Create(sizeof(int), &sumInt, ZeroInt(), &multInt, OneInt(), &powInt);
+	struct RingInfo *ringInt = Create("integers", sizeof(int), &scanInt, &printInt, &sumInt, ZeroInt(), &multInt, OneInt(), &powInt);
+	
 }

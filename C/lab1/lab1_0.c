@@ -14,11 +14,12 @@
 Базовые функции со структурами: + (на основе ]), * (на основе ]), ^ (на основе * и ] ), ] (обрезание хвостов)
 Нейтральные элементы (структуры): 0, x
 
-CpyPol (и ринг, и коэфы (под которые надо перевыделять память), и степень), FreePol (только коэфы и сам полином, вместе с topol пока чистятся числа)
-Ввод чисел (int или double) и структур
-Вывод структур
+
+FreePol (только коэфы и сам полином, вместе с topol пока чистятся числа - пусть так и остается) - переделать под работу с массивом
+
 Нейтральные структуры пока не нужны
 Добавить const
+Сделать для дабла
 */
 
 // 0.Readline
@@ -75,7 +76,7 @@ struct RingInfo
 	void *(*pow)(void *, int);
 };
 
-struct RingInfo *Create(
+struct RingInfo *RingCreate(
 	char* type,
 	size_t size,
 	void (*scan)(void *),
@@ -106,6 +107,25 @@ struct Polynomial
 	void *coefficients;
 	int degree;
 };
+
+struct Data
+{
+	struct RingInfo *comRingInfo;
+	struct Polynomial *polynomials;
+	int number;
+};
+
+struct Data *DataCreate(
+	struct RingInfo *comRingInfo,
+	struct Polynomial *polynomials,
+	int number)
+{
+	struct Data *data = malloc(sizeof(struct Data));
+	data->comRingInfo = comRingInfo;
+	data->polynomials = polynomials;
+	data->number = number;
+}
+
 
 struct Polynomial *the_zero;
 

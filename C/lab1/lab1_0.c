@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <bool.h>
 
 /*
 Многочлены
@@ -237,6 +238,7 @@ struct Polynomial *Comp(struct Polynomial *p1, struct Polynomial *p2)
 
 /*struct Polynomial *Insert (struct RingInfo ringInfo)
 {
+	int degree = 0;	
 	While()
 }*/
 

@@ -182,6 +182,7 @@ void PolInData(struct Data *data)
 	char *input = NULL;
 	do
 	{
+		err = 0;
 		input = readline("Enter the degree of the polynomial:\n");
 		length = strlen(input);
 		for (int i = 0; i < length; i++)
@@ -204,19 +205,6 @@ void PolInData(struct Data *data)
 	Cut(newPol);
 }
 
-void ResInData(struct Polynomial *res, struct Data *data)
-{
-	if (choiceMessage(
-			"Do you want to write the result in data?",
-			"yes",
-			"no"))
-	{
-		DataRealloc(data);
-		CpyPol(data->polynomials + data->number - 1, res);
-	}
-	FreePol(res);
-}
-
 void PolOutput(struct Polynomial *output)
 {
 	printf("The degree of the polynomial is %d\n", output->degree);
@@ -235,7 +223,7 @@ void PolOutput(struct Polynomial *output)
 void DataOutput(struct Data *output)
 {
 	printf("The number of polynomials, which coefficients are %s, is %d\n", output->comRingInfo->type, output->number);
-	printf("The polynoms are:\n\n");
+	printf("The polynomials are:\n\n");
 	for (int i = 0; i <= output->number; i++)
 	{
 		printf("%d. ", i + 1);
@@ -245,9 +233,32 @@ void DataOutput(struct Data *output)
 	printf("\n");
 }
 
-void DelPolFromData(struct Data *data, int number) //извне проверить намбер
+struct Polynomial *PolChoose(struct Data *data, int *number)
 {
-	struct Polynomial *delPol = data->polynomials + number - 1;
+	printf("Choose the polynomial from the list below by entering its number.\n\n");
+	DataOutput(data);
+	char *input = NULL;
+	int ans = 0;
+	while(1)
+	{
+		input = readline("");
+		ans = atoi(input);
+		if((ans > 0) && (ans <= data->number))
+		{
+			break;
+		}
+	}
+	if(number)
+	{
+		*number = ans;
+	}
+	return data->polynomials + ans - 1;
+}
+
+void DelPolFromData(struct Data *data) //извне проверить намбер
+{
+	int number = 0;
+	struct Polynomial *delPol = PolChoose(data, &number);
 	free(delPol->coefficients);
 	memmove(delPol, delPol + 1, (data->number - number) * sizeof(struct Polynomial));
 	data->number--;
@@ -640,17 +651,16 @@ int DialogMenu(int intNumber, int doubleNumber)
 
 bool choiceMessage(char *message, char *option1, char *option2)
 {
-	int err = 0;
-	char *ans = NULL;
+	char *input = NULL;
 	while (1)
 	{
 		printf("%s [%s/%s]\n", message, option1, option2);
-		ans = readline("");
-		if (!strcmp(ans, message))
+		input = readline("");
+		if (!strcmp(input, message))
 		{
 			return 1;
 		}
-		else if (!strcmp(ans, message))
+		else if (!strcmp(input, message))
 		{
 			return 0;
 		}
@@ -659,6 +669,19 @@ bool choiceMessage(char *message, char *option1, char *option2)
 			printf("Error: incorrect input\n");
 		}
 	}
+}
+
+void ResInData(struct Polynomial *res, struct Data *data)
+{
+	if (choiceMessage(
+			"Do you want to write the result in data?",
+			"yes",
+			"no"))
+	{
+		DataRealloc(data);
+		CpyPol(data->polynomials + data->number - 1, res);
+	}
+	FreePol(res);
 }
 
 int main()
@@ -706,12 +729,12 @@ int main()
 						"i",
 						"r"))
 				{
-					struct Polynomial *sum = Sum(PolChoose(dataInt), PolChoose(dataInt));
+					struct Polynomial *sum = Sum(PolChoose(dataInt, NULL), PolChoose(dataInt, NULL));
 					ResInData(sum, dataInt);
 				}
 				else
 				{
-					struct Polynomial *sum = Sum(PolChoose(dataDouble), PolChoose(dataDouble));
+					struct Polynomial *sum = Sum(PolChoose(dataDouble, NULL), PolChoose(dataDouble, NULL));
 					ResInData(sum, dataDouble);
 				}
 			}

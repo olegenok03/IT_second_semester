@@ -24,48 +24,56 @@ FreePol (только коэфы и сам полином, вместе с topol
 
 // 0.Readline
 
-char *readline(const char *a) {
-        char buf[81] = {0};
-        char *res = NULL;
-        int len = 0;
-        int n = 0;
- 
-        printf("%s", a);
- 
-        do {
-                n = scanf("%80[^\n]", buf);
-                if (n < 0) {
-                        if (!res) {
-                                return NULL;
-                        }
-                }
-                else if (n > 0) {
-                        int chunk_len = strlen(buf);
-                        int str_len = len + chunk_len;
-                        res = realloc(res, str_len + 1);
-                        memcpy(res + len, buf, chunk_len);
-                        len = str_len;
-                }
-                else {
-                        scanf("%*c");
-                }
-        } while (n > 0);
- 
-        if (len > 0) {
-                res[len] = '\0';
-        }
-        else {
-                res = calloc(1, sizeof(char));
-        }
- 
-        return res;
+char *readline(const char *a)
+{
+	char buf[81] = {0};
+	char *res = NULL;
+	int len = 0;
+	int n = 0;
+
+	printf("%s", a);
+
+	do
+	{
+		n = scanf("%80[^\n]", buf);
+		if (n < 0)
+		{
+			if (!res)
+			{
+				return NULL;
+			}
+		}
+		else if (n > 0)
+		{
+			int chunk_len = strlen(buf);
+			int str_len = len + chunk_len;
+			res = realloc(res, str_len + 1);
+			memcpy(res + len, buf, chunk_len);
+			len = str_len;
+		}
+		else
+		{
+			scanf("%*c");
+		}
+	} while (n > 0);
+
+	if (len > 0)
+	{
+		res[len] = '\0';
+	}
+	else
+	{
+		res = calloc(1, sizeof(char));
+	}
+
+	return res;
 }
 
 // 1.Ring
 
 struct RingInfo
 {
-	char* type;
+	char *type;
 	size_t size;
 	void (*scan)(void *);
 	void (*print)(void *);
@@ -77,7 +85,7 @@ struct RingInfo
 };
 
 struct RingInfo *RingCreate(
-	char* type,
+	char *type,
 	size_t size,
 	void (*scan)(void *),
 	void (*print)(void *),
@@ -107,7 +115,7 @@ void RingDelete(struct RingInfo *ringInfo)
 }
 
 // 2.Polynomial
-
+// main
 struct Polynomial
 {
 	struct RingInfo *ringInfo;
@@ -149,50 +157,75 @@ void Cut(struct Polynomial *p)
 
 void DataDelete(struct Data *data)
 {
-	for(int i = 0; i < data->number; i++)
+	for (int i = 0; i < data->number; i++)
 	{
-		free(	(data->polynomials + i)->coefficients	);
+		free((data->polynomials + i)->coefficients);
 	}
 	free(data->polynomials);
 	free(data);
 }
 
-void PolInData (struct Data *data)
+void DataRealloc(struct Data *data)
 {
 	data->number++;
 	data->polynomials = realloc(data->polynomials, data->number * sizeof(struct Polynomial));
+}
+
+void PolInData(struct Data *data)
+{
+	DataRealloc(data);
 	struct Polynomial *newPol = data->polynomials + data->number - 1;
 	struct RingInfo *ringInfo = data->comRingInfo;
 	newPol->ringInfo = ringInfo;
 	int length = 0;
 	bool err = 0;
 	char *input = NULL;
-	do {
-			input = readline("Enter the degree of the polynomial:\n");
-			length = strlen(input);
-			for(int i = 0; i < length; i++) {
-				if((input[i] > '9') || (input[i] < '0')){
-					err = 1;
-					printf("Incorrect input\n");
-					break;
-				}
+	do
+	{
+		input = readline("Enter the degree of the polynomial:\n");
+		length = strlen(input);
+		for (int i = 0; i < length; i++)
+		{
+			if ((input[i] > '9') || (input[i] < '0'))
+			{
+				err = 1;
+				printf("Incorrect input\n");
+				break;
 			}
+		}
 	} while (err);
 	newPol->degree = atoi(input);
 	free(input);
 	newPol->coefficients = malloc((newPol->degree + 1) * ringInfo->size);
-	for(int i = 0; i <= newPol->degree; i++) {
+	for (int i = 0; i <= newPol->degree; i++)
+	{
 		ringInfo->scan(newPol->coefficients + i * ringInfo->size); //здесь пока без фильтрации ввода
 	}
 	Cut(newPol);
 }
 
-void PolOutput(struct Polynomial *output) {
+void ResInData(struct Polynomial *res, struct Data *data)
+{
+	if (choiceMessage(
+			"Do you want to write the result in data?",
+			"yes",
+			"no"))
+	{
+		DataRealloc(data);
+		CpyPol(data->polynomials + data->number - 1, res);
+	}
+	FreePol(res);
+}
+
+void PolOutput(struct Polynomial *output)
+{
 	printf("The degree of the polynomial is %d\n", output->degree);
 	printf("The coefficients are %s:\n(", output->ringInfo->type);
-	for(int i = 0; i <= output->degree; i++) {
+	for (int i = 0; i <= output->degree; i++)
+	{
 		output->ringInfo->print(output->coefficients + i * output->ringInfo->size);
-		if(i != output->degree) {
+		if (i != output->degree)
+		{
 			printf(", ");
 		}
 	}
@@ -202,16 +235,20 @@ void PolOutput(struct Polynomial *output) {
 void DataOutput(struct Data *output)
 {
 	printf("The number of polynomials, which coefficients are %s, is %d\n", output->comRingInfo->type, output->number);
-	printf("The polynoms are:\n");
-	for(int i = 0; i <= output->number; i++) {
+	printf("The polynoms are:\n\n");
+	for (int i = 0; i <= output->number; i++)
+	{
+		printf("%d. ", i + 1);
 		PolOutput(output->polynomials + i);
+		printf("\n");
 	}
+	printf("\n");
 }
 
-void DelPolFromData(struct Data *data, int number)//извне проверить намбер
+void DelPolFromData(struct Data *data, int number) //извне проверить намбер
 {
 	struct Polynomial *delPol = data->polynomials + number - 1;
-	free(delPol->coefficients);	
+	free(delPol->coefficients);
 	memmove(delPol, delPol + 1, (data->number - number) * sizeof(struct Polynomial));
 	data->number--;
 	data->polynomials = realloc(data->polynomials, data->number * sizeof(struct Polynomial));
@@ -249,7 +286,7 @@ struct Polynomial *X(struct RingInfo *ringInfo)
 }
 */
 
-void CpyPol (struct Polynomial *to, struct Polynomial *from) //нужен для перенесения основных резов операций
+void CpyPol(struct Polynomial *to, struct Polynomial *from) //нужен для перенесения основных резов операций
 {
 	to->ringInfo = from->ringInfo;
 	to->degree = from->degree;
@@ -257,11 +294,13 @@ void CpyPol (struct Polynomial *to, struct Polynomial *from) //нужен для
 	memcpy(to->coefficients, from->coefficients, to->ringInfo->size * (to->degree + 1));
 }
 
-void FreePol (struct Polynomial *p) //нужен для topol, для удаления основных и побочных резов операций
+void FreePol(struct Polynomial *p) //нужен для topol, для удаления основных и побочных резов операций
 {
 	free(p->coefficients);
 	free(p);
 }
+
+//operations
 
 struct Polynomial *Sum(struct Polynomial *p1, struct Polynomial *p2) //подразумеваем, что одной природы
 {
@@ -315,7 +354,7 @@ struct Polynomial *Mult(struct Polynomial *p1, struct Polynomial *p2) //подр
 	return res;
 }
 
-struct Polynomial *ToPol(void *a, struct RingInfo *ringInfo)//подразумеваем, что одной природы
+struct Polynomial *ToPol(void *a, struct RingInfo *ringInfo) //подразумеваем, что одной природы
 {
 	struct Polynomial *res = malloc(sizeof(struct Polynomial));
 	res->ringInfo = ringInfo;
@@ -531,33 +570,37 @@ int DialogMenu(int intNumber, int doubleNumber)
 	printf("Wellcome to the main menu. Choose option by entering its number:\n");
 	printf("1.Enter new polynomial\n");
 	int i = 2;
-	if(intNumber || doubleNumber)
+	if (intNumber || doubleNumber)
 	{
 		printf("2.Print the polynomials\n", i++);
 	}
-	if((intNumber >= 2) || (doubleNumber >= 2))
+	if ((intNumber >= 2) || (doubleNumber >= 2))
 	{
 		printf("3.Sum the polynomials\n", i++);
 		printf("4.Multiply the polynomials\n", i++);
 	}
-	if(intNumber || doubleNumber)
+	if (intNumber || doubleNumber)
 	{
 		printf("%d.Multiply the polynomial with a number\n", i++);
 		printf("%d.Evaluate the polynomial\n", i++);
 	}
-	if((intNumber >= 2) || (doubleNumber >= 2))
+	if ((intNumber >= 2) || (doubleNumber >= 2))
 	{
 		printf("%d.Compose the polynomials\n", i++);
 	}
-	if(intNumber || doubleNumber)
+	if (intNumber || doubleNumber)
 	{
 		printf("%d.Delete the polynomial\n", i++);
 	}
-	printf("%d.Exit\n", i);
+	printf("%d.Exit\n\n", i);
 	char *choiceChar = readline("");
 	int choice = atoi(choiceChar);
 	free(choiceChar);
-	if(i == 2)
+	if (choice != i)
+	{
+		printf("\n");
+	}
+	if (i == 2)
 	{
 		switch (choice)
 		{
@@ -569,7 +612,7 @@ int DialogMenu(int intNumber, int doubleNumber)
 			return 0;
 		}
 	}
-	else if(i == 6)
+	else if (i == 6)
 	{
 		switch (choice)
 		{
@@ -599,17 +642,20 @@ bool choiceMessage(char *message, char *option1, char *option2)
 {
 	int err = 0;
 	char *ans = NULL;
-	while(1)
+	while (1)
 	{
 		printf("%s [%s/%s]\n", message, option1, option2);
 		ans = readline("");
-		if (!strcmp(ans, message)) {
+		if (!strcmp(ans, message))
+		{
 			return 1;
 		}
-		else if (!strcmp(ans, message)) {
+		else if (!strcmp(ans, message))
+		{
 			return 0;
 		}
-		else {
+		else
+		{
 			printf("Error: incorrect input\n");
 		}
 	}
@@ -621,44 +667,83 @@ int main()
 	struct RingInfo *ringDouble = RingCreate("reals", sizeof(double), &scanDouble, &printDouble, &sumDouble, ZeroDouble(), &multDouble, OneDouble(), &powDouble);
 	struct Data *dataInt = DataCreate(ringInt, NULL, 0);
 	struct Data *dataDouble = DataCreate(ringDouble, NULL, 0);
+	void *constInt = NULL, *constDouble = NULL;
 	int choice = 0;
 	bool exitFlag = 0;
-	while(!exitFlag)
+	while (!exitFlag)
 	{
 		choice = DialogMenu(dataInt->number, dataDouble->number);
-		switch (choice) {
-			case 1:
+		switch (choice)
+		{
+		case 1: // enter
+			if (choiceMessage(
+					"Do you want to enter polynomial with integer coefficients or with real coefficients?",
+					"i",
+					"r"))
+			{
+				PolInData(dataInt);
+			}
+			else
+			{
+				PolInData(dataDouble);
+			}
+			break;
+		case 2: // print
+			if (dataInt->number)
+			{
+				DataOutput(dataInt);
+			}
+			if (dataDouble->number)
+			{
+				DataOutput(dataDouble);
+			}
+			break;
+		case 3: // sum
+			if ((dataInt->number >= 2) && (dataDouble->number >= 2))
+			{
+				if (choiceMessage(
+						"Do you want to sum polynomials with integer coefficients or with real coefficients?",
+						"i",
+						"r"))
+				{
+					struct Polynomial *sum = Sum(PolChoose(dataInt), PolChoose(dataInt));
+					ResInData(sum, dataInt);
+				}
+				else
+				{
+					struct Polynomial *sum = Sum(PolChoose(dataDouble), PolChoose(dataDouble));
+					ResInData(sum, dataDouble);
+				}
+			}
+			else if (dataInt->number >= 2)
+			{
+			}
+			else
+			{
+			}
+			break;
+		case 4: // multiply
 
-				break;
-			case 2:
+			break;
+		case 5: // multiply with a number
 
-				break;
-			case 3:
+			break;
+		case 6: // evaluate
 
-				break;
-			case 4:
+			break;
+		case 7: // compose
 
-				break;
-			case 5:
+			break;
+		case 8: // delete
 
-				break;
-			case 6:
-
-				break;
-			case 7:
-
-				break;
-			case 8:
-
-				break;
-			case 9:
-				exitFlag = 1;
-				break;
-			default:
-				printf("Error: incorrect input\n");
-				break;
+			break;
+		case 9: // exit
+			exitFlag = 1;
+			break;
+		default:
+			printf("Error: incorrect input\n");
+			break;
 		}
-		printf("\n");
 	}
 	DataDelete(dataInt);
 	DataDelete(dataDouble);

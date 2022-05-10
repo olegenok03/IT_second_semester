@@ -221,6 +221,19 @@ struct Polynomial
 	int degree;
 };
 
+struct Polynomial *PolCreate (
+	struct RingInfo *ringInfo,
+	void *coefficients,
+	int degree
+)
+{
+	struct Polynomial *res = malloc(sizeof(struct Polynomial));
+	res->ringInfo = ringInfo;
+	res->coefficients = coefficients;
+	res->degree = degree;
+	return res;
+}
+
 struct Data
 {
 	struct RingInfo *comRingInfo;
@@ -432,9 +445,7 @@ struct Polynomial *X(struct RingInfo *ringInfo)
 
 struct Polynomial *Sum(struct Polynomial *p1, struct Polynomial *p2) //подразумеваем, что одной природы
 {
-	struct Polynomial *res = malloc(sizeof(struct Polynomial));
-	res->ringInfo = p1->ringInfo;
-	res->degree = p1->degree;
+	struct Polynomial *res = PolCreate(p1->ringInfo, NULL, p1->degree);
 	size_t newSize = p1->ringInfo->size * (p1->degree + 1);
 	if (p2->degree > res->degree)
 	{
@@ -469,9 +480,7 @@ struct Polynomial *Sum(struct Polynomial *p1, struct Polynomial *p2) //подр�
 
 struct Polynomial *Mult(struct Polynomial *p1, struct Polynomial *p2) //подразумеваем, что одной природы
 {
-	struct Polynomial *res = malloc(sizeof(struct Polynomial));
-	res->ringInfo = p1->ringInfo;
-	res->degree = p1->degree + p2->degree;
+	struct Polynomial *res = PolCreate(p1->ringInfo, NULL, p1->degree + p2->degree);
 	size_t size = p1->ringInfo->size;
 	size_t newSize = (res->degree + 1) * size;
 	void *buf1 = NULL;
@@ -498,11 +507,7 @@ struct Polynomial *Mult(struct Polynomial *p1, struct Polynomial *p2) //подр
 
 struct Polynomial *ToPol(void *a, struct RingInfo *ringInfo) //подразумеваем, что одной природы
 {
-	struct Polynomial *res = malloc(sizeof(struct Polynomial));
-	res->ringInfo = ringInfo;
-	res->coefficients = a;
-	res->degree = 0;
-	return res;
+	return PolCreate(ringInfo, a, 0);
 }
 
 struct Polynomial *Pow(struct Polynomial *p, int power)
@@ -513,26 +518,23 @@ struct Polynomial *Pow(struct Polynomial *p, int power)
 		memcpy(newOne, p->ringInfo->one, p->ringInfo->size);
 		return ToPol(newOne, p->ringInfo);
 	}
-	struct Polynomial *res = malloc(sizeof(struct Polynomial));
-	struct Polynomial *buf = malloc(sizeof(struct Polynomial));
+	struct Polynomial *res = PolCreate(NULL, NULL, 0);
+	struct Polynomial *buf = PolCreate(NULL, NULL, 0);
 	CpyPol(res, p);
 	for (int i = 1; i < power; i++)
 	{
 		CpyPol(buf, res);
 		FreePol(res);
 		res = Mult(buf, p);
-		FreePol(buf);
 	}
+	FreePol(buf);
 	return res;
 }
 
 struct Polynomial *Comp(struct Polynomial *p1, struct Polynomial *p2)
 { //мб сделать проверку на x?
-	struct Polynomial *res = malloc(sizeof(struct Polynomial));
-	res->ringInfo = p1->ringInfo;
-	res->degree = 0;
-	size_t size = res->ringInfo->size;
-	res->coefficients = malloc(size);
+	size_t size = p1->ringInfo->size;
+	struct Polynomial *res = PolCreate(p1->ringInfo, malloc(size), 0);	
 	memcpy(res->coefficients, res->ringInfo->zero, size);
 	struct Polynomial *buf1 = NULL;
 	struct Polynomial *buf2 = NULL;
@@ -543,6 +545,8 @@ struct Polynomial *Comp(struct Polynomial *p1, struct Polynomial *p2)
 		if (memcmp(p1->coefficients + i * size, p1->ringInfo->zero, size))
 		{
 			buf1 = ToPol(p1->coefficients + i * size, p1->ringInfo);
+			printf("!!!DEBUG!!!\nbuf1: ");
+			PolOutput(buf1);
 			buf2 = Pow(p2, i);
 			buf3 = Mult(buf1, buf2);
 			buf4 = Sum(res, buf3);

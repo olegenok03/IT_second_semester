@@ -154,14 +154,17 @@ bool choiceMessage(char *message, char *option1, char *option2)
 		input = readline("");
 		if (!strcmp(input, option1))
 		{
+			free(input);
 			return 1;
 		}
 		else if (!strcmp(input, option2))
 		{
+			free(input);
 			return 0;
 		}
 		else
 		{
+			free(input);
 			printf("Error: incorrect input\n");
 		}
 	}
@@ -326,6 +329,7 @@ void PolInData(struct Data *data)
 				break;
 			}
 		}
+		free(input);
 	} while (err);
 	newPol->degree = atoi(input);
 	free(input);
@@ -389,6 +393,7 @@ struct Polynomial *PolChoose(struct Data *data, int *number)
 	{
 		input = readline("");
 		ans = atoi(input);
+		free(input);
 		if((ans > 0) && (ans <= data->number))
 		{
 			break;

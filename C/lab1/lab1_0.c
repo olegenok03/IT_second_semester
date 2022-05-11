@@ -689,7 +689,7 @@ void *ZeroDouble()
 	{
 		zeroDouble = malloc(sizeof(double));
 		double *a = (double *)zeroDouble;
-		*a = 0;
+		*a = 0.0;
 	}
 	return zeroDouble;
 }
@@ -702,7 +702,7 @@ void *OneDouble()
 	{
 		oneDouble = malloc(sizeof(double));
 		double *a = (double *)oneDouble;
-		*a = 0;
+		*a = 1.0;
 	}
 	return oneDouble;
 }

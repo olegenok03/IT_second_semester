@@ -326,10 +326,10 @@ void PolInData(struct Data *data)
 			{
 				err = 1;
 				printf("Incorrect input\n");
+				free(input);
 				break;
 			}
 		}
-		free(input);
 	} while (err);
 	newPol->degree = atoi(input);
 	free(input);

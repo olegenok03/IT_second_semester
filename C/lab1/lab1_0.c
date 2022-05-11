@@ -280,6 +280,9 @@ void DataRealloc(struct Data *data)
 {
 	data->number++;
 	data->polynomials = realloc(data->polynomials, data->number * sizeof(struct Polynomial));
+	(data->polynomials + data->number - 1)->ringInfo = NULL;
+	(data->polynomials + data->number - 1)->coefficients = NULL;
+	(data->polynomials + data->number - 1)->degree = 0;
 }
 
 void CpyPol(struct Polynomial *to, struct Polynomial *from) //нужен для перенесения основных резов операций
@@ -545,8 +548,6 @@ struct Polynomial *Comp(struct Polynomial *p1, struct Polynomial *p2)
 		if (memcmp(p1->coefficients + i * size, p1->ringInfo->zero, size))
 		{
 			buf1 = ToPol(p1->coefficients + i * size, p1->ringInfo);
-			printf("!!!DEBUG!!!\nbuf1: ");
-			PolOutput(buf1);
 			buf2 = Pow(p2, i);
 			buf3 = Mult(buf1, buf2);
 			buf4 = Sum(res, buf3);
@@ -811,22 +812,24 @@ int main()
 						"i",
 						"r"))
 				{
+					struct Polynomial *choice = PolChoose(dataInt, NULL);
 					void *multCoef = malloc(dataInt->comRingInfo->size);
 					printf("Enter the coefficient:\n");
 					dataInt->comRingInfo->scan(multCoef);
 					struct Polynomial *polMultCoef = ToPol(multCoef, dataInt->comRingInfo);
-					struct Polynomial *mult = Mult(polMultCoef, PolChoose(dataInt, NULL));
+					struct Polynomial *mult = Mult(polMultCoef, choice);
 					PolOutput(mult);
 					ResInData(mult, dataInt);
 					FreePol(polMultCoef);
 				}
 				else
 				{
+					struct Polynomial *choice = PolChoose(dataDouble, NULL);
 					void *multCoef = malloc(dataDouble->comRingInfo->size);
 					printf("Enter the coefficient:\n");
 					dataDouble->comRingInfo->scan(multCoef);
 					struct Polynomial *polMultCoef = ToPol(multCoef, dataDouble->comRingInfo);
-					struct Polynomial *mult = Mult(polMultCoef, PolChoose(dataDouble, NULL));
+					struct Polynomial *mult = Mult(polMultCoef, choice);
 					PolOutput(mult);
 					ResInData(mult, dataDouble);
 					FreePol(polMultCoef);
@@ -834,22 +837,24 @@ int main()
 			}
 			else if (dataInt->number)
 			{
+				struct Polynomial *choice = PolChoose(dataInt, NULL);
 				void *multCoef = malloc(dataInt->comRingInfo->size);
 				printf("Enter the coefficient:\n");
 				dataInt->comRingInfo->scan(multCoef);
 				struct Polynomial *polMultCoef = ToPol(multCoef, dataInt->comRingInfo);
-				struct Polynomial *mult = Mult(polMultCoef, PolChoose(dataInt, NULL));
+				struct Polynomial *mult = Mult(polMultCoef, choice);
 				PolOutput(mult);
 				ResInData(mult, dataInt);
 				FreePol(polMultCoef);
 			}
 			else
 			{
+				struct Polynomial *choice = PolChoose(dataDouble, NULL);
 				void *multCoef = malloc(dataDouble->comRingInfo->size);
 				printf("Enter the coefficient:\n");
 				dataDouble->comRingInfo->scan(multCoef);
 				struct Polynomial *polMultCoef = ToPol(multCoef, dataDouble->comRingInfo);
-				struct Polynomial *mult = Mult(polMultCoef, PolChoose(dataDouble, NULL));
+				struct Polynomial *mult = Mult(polMultCoef, choice);
 				PolOutput(mult);
 				ResInData(mult, dataDouble);
 				FreePol(polMultCoef);
@@ -863,22 +868,24 @@ int main()
 						"i",
 						"r"))
 				{
+					struct Polynomial *choice = PolChoose(dataInt, NULL);
 					void *value = malloc(dataInt->comRingInfo->size);
 					printf("Enter the value:\n");
 					dataInt->comRingInfo->scan(value);
 					struct Polynomial *polValue = ToPol(value, dataInt->comRingInfo);
-					struct Polynomial *comp = Comp(PolChoose(dataInt, NULL), polValue);
+					struct Polynomial *comp = Comp(choice, polValue);
 					PolOutput(comp);
 					ResInData(comp, dataInt);
 					FreePol(polValue);
 				}
 				else
 				{
+					struct Polynomial *choice = PolChoose(dataDouble, NULL);
 					void *value = malloc(dataDouble->comRingInfo->size);
 					printf("Enter the value:\n");
 					dataDouble->comRingInfo->scan(value);
 					struct Polynomial *polValue = ToPol(value, dataDouble->comRingInfo);
-					struct Polynomial *comp = Comp(PolChoose(dataDouble, NULL), polValue);
+					struct Polynomial *comp = Comp(choice, polValue);
 					PolOutput(comp);
 					ResInData(comp, dataDouble);
 					FreePol(polValue);
@@ -886,22 +893,24 @@ int main()
 			}
 			else if (dataInt->number)
 			{
+				struct Polynomial *choice = PolChoose(dataInt, NULL);
 				void *value = malloc(dataInt->comRingInfo->size);
 				printf("Enter the value:\n");
 				dataInt->comRingInfo->scan(value);
 				struct Polynomial *polValue = ToPol(value, dataInt->comRingInfo);
-				struct Polynomial *comp = Comp(PolChoose(dataInt, NULL), polValue);
+				struct Polynomial *comp = Comp(choice, polValue);
 				PolOutput(comp);
 				ResInData(comp, dataInt);
 				FreePol(polValue);
 			}
 			else
 			{
+				struct Polynomial *choice = PolChoose(dataDouble, NULL);
 				void *value = malloc(dataDouble->comRingInfo->size);
 				printf("Enter the value:\n");
 				dataDouble->comRingInfo->scan(value);
 				struct Polynomial *polValue = ToPol(value, dataDouble->comRingInfo);
-				struct Polynomial *comp = Comp(PolChoose(dataDouble, NULL), polValue);
+				struct Polynomial *comp = Comp(choice, polValue);
 				PolOutput(comp);
 				ResInData(comp, dataDouble);
 				FreePol(polValue);

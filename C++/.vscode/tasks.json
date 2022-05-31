@@ -3,11 +3,10 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: gcc.exe сборка активного файла",
-			"command": "C:\\msys64\\mingw64\\bin\\gcc.exe",
+			"label": "C/C++: g++.exe build active file",
+			"command": "C:\\msys64\\mingw64\\bin\\g++.exe",
 			"args": [
 				"-fdiagnostics-color=always",
-				//"-lreadline",
 				"-g",
 				"${file}",
 				"-o",
@@ -19,11 +18,8 @@
 			"problemMatcher": [
 				"$gcc"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"detail": "компилятор: C:\\msys64\\mingw64\\bin\\gcc.exe"
+			"group": "build",
+			"detail": "compiler: C:\\msys64\\mingw64\\bin\\g++.exe"
 		}
 	]
 }

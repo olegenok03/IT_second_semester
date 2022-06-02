@@ -3,8 +3,9 @@
 //зачем Рословцеву ссылка?
 //как работает переключение? какие поля должны быть sequence-ах?
 //функция очистки???
-//memcpy - можно ли использовать?
+// memcpy - можно ли использовать?
 //сдвиг в dynamic array, метод увеличения размера при необходимости у ArraySequence
+//сделать sequence-ы френдами в низших классах, а все их поля сделать приватными?
 
 #include <iostream>
 #include <cstring>
@@ -22,23 +23,18 @@ public:
 
     DynamicArray(int count)
     {
-        this->items = new T[count];
+        items = new T[count];
         this->count = count;
     }
 
     DynamicArray(const DynamicArray<T> &dynamicArray)
     {
-        this->count = dynamicArray->count;
-        this->items = new T[this->count];
-        for (int i = 0; i < this->count; i++)
-        {
-            this->items[i] = dynamicArray->items[i];
-        }
+        DynamicArray(dynamicArray->items, dynamicArray->count);
     }
 
     T Get(int index)
     {
-        return this->items[index];
+        return items[index];
     }
 
     int GetSize()
@@ -48,19 +44,31 @@ public:
 
     void Set(int index, T value)
     {
-        this->items[index] = value;
+        items[index] = value;
     }
 
     void Resize(int newSize)
     {
         T *newItems = new T[newSize];
-        for (int i = 0; (i < newSize) && (i < this->count); i++)
+        for (int i = 0; (i < newSize) && (i < count); i++)
         {
-            newItems[i] = this->items[i];
+            newItems[i] = items[i];
         }
-        delete (this->items);
-        this->items = newItems;
-        this->count = newSize;
+        delete items;
+        items = newItems;
+        //count = newSize;
+    }
+
+    void Shift(int index) { //считаем, что память выделили извне
+        for(int i = count - 1; i >= index; i--) {
+            items[i + 1] = items[i];
+        }
+    }
+
+    void InsertAt(int index, T value) { //считаем, что память выделили извне
+        Shift(index);
+        Set(index, value);
+        count++;
     }
 
 private:
@@ -106,7 +114,7 @@ public:
         LinkedList(NULL, NULL, 0);
     }
 
-    LinkedList(T *items, int count)
+    LinkedList(T *items, int count)//мыбы реализовать через append?
     {
 
         if (!count)
@@ -126,7 +134,7 @@ public:
         }
     }
 
-    LinkedList(const LinkedList<T> &list)
+    LinkedList(const LinkedList<T> &list)//мыбы тоже через append?
     {
         ItemOfList<T> *cur = list.head;
         if (!cur)
@@ -151,17 +159,17 @@ public:
 
     T GetFirst()
     {
-        return this->head->data;
+        return head->data;
     }
 
     T GetLast()
     {
-        return this->tail->data;
+        return tail->data;
     }
 
     T Get(int index)
     {
-        ItemOfList<T> *cur = this->head;
+        ItemOfList<T> *cur = head;
         for (int i = 1; i <= index; i++)
         {
             cur = cur->next;
@@ -171,8 +179,8 @@ public:
 
     LinkedList<T> *GetSubList(int startIndex, int endIndex)
     {
-        ItemOfList<T> *start = this->head;
-        ItemOfList<T> *end = this->head;
+        ItemOfList<T> *start = head;
+        ItemOfList<T> *end = head;
         for (int i = 1; i <= startIndex; i++)
         {
             start = start->next;
@@ -191,45 +199,47 @@ public:
 
     void Append(T value)
     {
-        ItemOfList<T> *newItem = new ItemOfList<T>(value, NULL, this->tail);
-        if (this->tail)
+        ItemOfList<T> *newItem = new ItemOfList<T>(value, NULL, tail);
+        if (tail)
         {
-            this->tail->next = newItem;
+            tail->next = newItem;
         }
         else
         {
-            this->head = newItem;
+            head = newItem;
         }
-        this->tail = newItem;
+        tail = newItem;
+        count++;
     }
 
     void Prepend(T value)
     {
-        ItemOfList<T> *newItem = new ItemOfList<T>(value, this->head, NULL);
-        if (this->head)
+        ItemOfList<T> *newItem = new ItemOfList<T>(value, head, NULL);
+        if (head)
         {
-            this->head->prev = newItem;
+            head->prev = newItem;
         }
         else
         {
-            this->tail = newItem;
+            tail = newItem;
         }
-        this->head = newItem;
+        head = newItem;
+        count++;
     }
 
     void InsertAt(T value, int index)
     {
         if (!index)
         {
-            this->Append(value);
+            Append(value);
         }
-        else if (index == this->count - 1)
+        else if (index == count - 1)
         {
-            this->Prepend(value);
+            Prepend(value);
         }
         else
         {
-            ItemOfList<T> *prevItem = this->head;
+            ItemOfList<T> *prevItem = head;
             for (int i = 1; i <= index - 1; i++)
             {
                 prevItem = prevItem->next;
@@ -243,21 +253,11 @@ public:
 
     LinkedList<T> *Concat(LinkedList<T> *list)
     {
-        if (!list->head)
-        {
-            return new LinkedList<T>(this);
+        LinkedList<T> *res = new LinkedList<T>(this);
+        for(int i = 0; i < list->count; i++) {
+            res->Append(list->Get(i));
         }
-        if (!this->head)
-        {
-            return new LinkedList<T>(list);
-        }
-        LinkedList<T> *first = new LinkedList<T>(this);
-        LinkedList<T> *second = new LinkedList<T>(list);
-        second->head->prev = first->tail;
-        first->tail->next = second->head;
-        first->tail = second->tail;
-        first->count += second->count;
-        return first;
+        return res;
     }
 
     // private:
@@ -276,6 +276,8 @@ public:
 
     virtual T Get(int index) = 0;
 
+    int GetLength() = 0;
+
     virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) = 0;
 
     virtual void Append(T value) = 0;
@@ -290,56 +292,97 @@ public:
 template <class T>
 class ArraySequence : Sequence<T>
 {
-    public:
-        ArraySequence(T *items, int count) {
-            this->buffer = new DynamicArray<T>(items, count);
+public:
+    ArraySequence(T *items, int count)
+    {
+        buffer = new DynamicArray<T>(items, count);
+        actual_size = count;
+    }
+
+    ArraySequence()
+    {
+        buffer = new DynamicArray<T>();
+        actual_size = 0;
+    }
+
+    ArraySequence(const DynamicArray<T> &dynamicArray)
+    {
+        buffer = new DynamicArray<T>(dynamicArray);
+        actual_size = dynamicArray->count;
+    }
+
+    virtual T GetFirst() override
+    {
+        return buffer->Get(0);
+    }
+
+    virtual T GetLast() override
+    {
+        return buffer->Get(buffer->count - 1);
+    }
+
+    virtual T Get(int index) override
+    {
+        return buffer->Get(index);
+    }
+
+    virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) override
+    {
+        return DynamicArray(buffer->items + startIndex, endIndex - startIndex);
+    }
+
+    virtual int GetLength() override {
+        return buffer->count;
+    }
+
+    virtual void Append(T value) override
+    {
+        if(!actual_size) {
+            buffer->Resize(1);
         }
-
-        ArraySequence() {
-            this->buffer = new DynamicArray<T>();
+        else if(buffer->count == actual_size) {
+            buffer->Resize(buffer->GetSize() * 2);
         }
+        buffer->InsertAt(buffer->count, value);
+    }
 
-        ArraySequence(const DynamicArray <T> &dynamicArray) {
-            this->buffer = new DynamicArray<T>(dynamicArray);
+    virtual void Prepend(T value) override
+    {
+        if(!actual_size) {
+            buffer->Resize(1);
         }
-
-        virtual T GetFirst() override {
-            return this->buffer->Get(0);
+        else if(buffer->count == actual_size) {
+            buffer->Resize(buffer->GetSize() * 2);
         }
+        buffer->InsertAt(0, value);
+    }
 
-        virtual T GetLast() override {
-            return this->buffer->Get(this->buffer->count - 1);
+    virtual void InsertAt(T value, int index) override
+    {
+        if(!actual_size) {
+            buffer->Resize(1);
         }
-
-        virtual T Get(int index) override {
-            return this->buffer->Get(index);
+        else if(buffer->count == actual_size) {
+            buffer->Resize(buffer->GetSize() * 2);
         }
+        buffer->InsertAt(index, value);
+    }
 
-        virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) override {
-            return DynamicArray(this->buffer->items + startIndex, endIndex - startIndex);
+    virtual Sequence<T> *Concat(Sequence<T> *list) override
+    {
+        ArraySequence<T> *res = new ArraySequence<T>(buffer);
+        for(int i = 0; i < list->GetLength(); i++) {
+            res->Append(list->Get(i));
         }
+        return res;
+    }
 
-        virtual void Append(T value) override {
+private:
+    DynamicArray<T> *buffer;
+    int actual_size;
+};
 
-        }
-
-        virtual void Prepend(T value) override {
-
-        }
-
-        virtual void InsertAt(T value, int index) override {
-
-        }
-
-        virtual Sequence<T> *Concat(Sequence<T> *list) override {
-
-        }
-    private:
-        DynamicArray<T> *buffer;
-}
-
-int
-main()
+int main()
 {
     int a[2] = {2, 3};
     int b[0];

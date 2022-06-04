@@ -1,10 +1,8 @@
 //нужно ли поле count списку? Должен ли он быть двусвязным?
 //вопрос по исключениям
 //зачем Рословцеву ссылка?
-//как работает переключение? какие поля должны быть sequence-ах?
 //функция очистки???
 // memcpy - можно ли использовать?
-//сдвиг в dynamic array, метод увеличения размера при необходимости у ArraySequence
 //сделать sequence-ы френдами в низших классах, а все их поля сделать приватными?
 
 #include <iostream>
@@ -59,14 +57,10 @@ public:
         //count = newSize;
     }
 
-    void Shift(int index) { //считаем, что память выделили извне
+    void InsertAt(int index, T value) { //считаем, что память выделили извне
         for(int i = count - 1; i >= index; i--) {
             items[i + 1] = items[i];
         }
-    }
-
-    void InsertAt(int index, T value) { //считаем, что память выделили извне
-        Shift(index);
         Set(index, value);
         count++;
     }
@@ -251,7 +245,7 @@ public:
         }
     }
 
-    LinkedList<T> *Concat(LinkedList<T> *list)
+    LinkedList<T> *Concat(LinkedList<T> *list) //а зочем?..
     {
         LinkedList<T> *res = new LinkedList<T>(this);
         for(int i = 0; i < list->count; i++) {
@@ -380,6 +374,77 @@ public:
 private:
     DynamicArray<T> *buffer;
     int actual_size;
+};
+
+template <class T>
+class ListSequence : Sequence<T>
+{
+public:
+    ListSequence(T *items, int count)
+    {
+        buffer = new LinkedList<T>(items, count);
+    }
+
+    ListSequence()
+    {
+        buffer = new LinkedList<T>();
+    }
+
+    ListSequence(const LinkedList<T> &list)
+    {
+        buffer = new LinkedList<T>(list);
+    }
+
+    virtual T GetFirst() override
+    {
+        return buffer->GetFirst;
+    }
+
+    virtual T GetLast() override
+    {
+        return buffer->GetLast;
+    }
+
+    virtual T Get(int index) override
+    {
+        return buffer->Get(index);
+    }
+
+    virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) override
+    {
+        return buffer->GetSubList(startIndex, endIndex);
+    }
+
+    virtual int GetLength() override {
+        return buffer->count;
+    }
+
+    virtual void Append(T value) override
+    {
+        buffer->Append(value);
+    }
+
+    virtual void Prepend(T value) override
+    {
+        buffer->Prepend(value);
+    }
+
+    virtual void InsertAt(T value, int index) override
+    {
+        buffer->InsertAt(value, index);
+    }
+
+    virtual Sequence<T> *Concat(Sequence<T> *list) override
+    {
+        ListSequence<T> *res = new ListSequence<T>(buffer);
+        for(int i = 0; i < list->GetLength(); i++) {
+            res->Append(list->Get(i));
+        }
+        return res;
+    }
+
+private:
+    LinkedList<T> *buffer;
 };
 
 int main()

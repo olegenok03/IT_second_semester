@@ -1,12 +1,53 @@
-//нужно ли поле count списку? Должен ли он быть двусвязным?
 //вопрос по исключениям
 //зачем Рословцеву ссылка?
-//функция очистки???
 // memcpy - можно ли использовать?
 //сделать sequence-ы френдами в низших классах, а все их поля сделать приватными?
 
+//вызов деструктора sequence-а при вводе новых данных и завершении программы
+//метод прибавления значения одного элемента к другому
+//оператор + для sequence-ов одной длины (иначе возвращает пустой sequence, надо сделать для sequence-а проверку на пустоту)
+//хотя мыбы просто сделаем проверку извне перед сложением
+//оператор * для sequence и T
+//разобраться с идентификаторами доступа (см комментарий выше)
+//операторы ввода и вывода для всего
+
+
 #include <iostream>
 #include <cstring>
+
+class ComplexNumber {
+    public:
+        ComplexNumber(double real, double imaginary) {
+            this->real = real;
+            this->imaginary = imaginary;
+        }
+
+        ComplexNumber getConjugate() {//в принципе нужно только для /
+            return ComplexNumber(real, - imaginary);
+        }
+
+        ComplexNumber operator + (ComplexNumber x) {
+            return ComplexNumber(this->real + x.real, this->imaginary + x.imaginary);
+        }
+
+        ComplexNumber operator * (ComplexNumber x) {
+            double newReal = this->real * x.real - this->imaginary * x.imaginary;
+            double newImaginary = this->real * x.imaginary + this->imaginary * x.real;
+            return ComplexNumber(newReal, newImaginary);
+        }
+
+        ComplexNumber operator / (ComplexNumber x) { //паприкола
+            ComplexNumber newNumerator = *this * x.getConjugate();
+            double newDenominator = (x * x.getConjugate()).real;
+            double newReal = newNumerator.real / newDenominator;
+            double newImaginary = newNumerator.imaginary / newDenominator;
+            return ComplexNumber(newReal, newImaginary);
+        }
+
+    //private:
+        double real;
+        double imaginary;
+};
 
 template <class T>
 class DynamicArray
@@ -63,6 +104,10 @@ public:
         }
         Set(index, value);
         count++;
+    }
+
+    ~DynamicArray() {
+        delete items;
     }
 
 private:
@@ -254,6 +299,14 @@ public:
         return res;
     }
 
+    ~LinkedList() {
+        ItemOfList<T> *cur = tail;
+        while(cur != NULL) {
+            cur = cur->prev;
+            delete cur->next;
+        }
+    }
+
     // private:
     ItemOfList<T> *head;
     ItemOfList<T> *tail;
@@ -281,6 +334,8 @@ public:
     virtual void InsertAt(T value, int index) = 0;
 
     virtual Sequence<T> *Concat(Sequence<T> *list) = 0;
+
+    virtual ~Sequence() = 0;
 };
 
 template <class T>
@@ -371,6 +426,10 @@ public:
         return res;
     }
 
+    ~ArraySequence() {
+        delete buffer;
+    }
+
 private:
     DynamicArray<T> *buffer;
     int actual_size;
@@ -443,9 +502,15 @@ public:
         return res;
     }
 
+    ~ListSequence() {
+        delete buffer;
+    }
+
 private:
     LinkedList<T> *buffer;
 };
+
+
 
 int main()
 {

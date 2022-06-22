@@ -423,7 +423,7 @@ public:
                 prevItem = prevItem->next;
             }
             ItemOfList<T> *nextItem = prevItem->next;
-            ItemOfList<T> *newItem = new ItemOfList<T>(value, nextItem, prev4Item);
+            ItemOfList<T> *newItem = new ItemOfList<T>(value, nextItem, prevItem);
             prevItem->next = newItem;
             nextItem->prev = newItem;
             count++;

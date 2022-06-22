@@ -423,9 +423,10 @@ public:
                 prevItem = prevItem->next;
             }
             ItemOfList<T> *nextItem = prevItem->next;
-            ItemOfList<T> *newItem = new ItemOfList<T>(value, prevItem, nextItem);
+            ItemOfList<T> *newItem = new ItemOfList<T>(value, nextItem, prev4Item);
             prevItem->next = newItem;
             nextItem->prev = newItem;
+            count++;
         }
     }
 
@@ -825,7 +826,7 @@ public:
     {
         LinkedList<T> *subList = buffer->GetSubList(startIndex, endIndex);
         Sequence<T> *res = new ListSequence(*subList);
-        delete subList;
+        //delete subList;
         return res;
     }
 
@@ -1322,8 +1323,8 @@ void RMComplexCheck()
 
 int main()
 {
-    ASIntCheck();
+    //ASIntCheck();
     LSDoubleCheck();
-    RMComplexCheck();
+    //RMComplexCheck();
     return 0;
 }

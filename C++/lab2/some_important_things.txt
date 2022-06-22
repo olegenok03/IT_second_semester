@@ -1,49 +1,39 @@
 DynamicArray:
-    SetDA(=)
-    Resize(=)
-    InsertAtDA(SetDA, =)
-    LinearTransformationDA(SetDA, +, *, coefficient тоже типа T)
 ItemOfList:
-    ItemOfList(=)
 LinkedList:
-    LinkedList_3(ItemOfList())
-    LinkedList_4(ItemOfList())
-    GetSublist(LinkedList_4)
-    SetLL(=)
-    AppendLL(ItemOfList())
-    PrependLL(ItemOfList())
-    InsertAtLL(ItemOfList())
-    ConcatLL(LinkedList_4(), AppendLL)
-    LinearTransformationLL(SetLL, +, *, coefficient тоже типа T)
 ArraySequence:
-    ArraySequence_4(некорректный вывод, >>, =)
-    AppendAS(InsertAtDA, Resize)
-    PrependAS(InsertAtDA, Resize)
-    InsertAtAS(InsertAtDA, Resize)
-    ConcatAS(AppendAS)
-    LinearTransformationAS(LinearTransformationDA)
-    AddAR(SetDA, +, *, coefficient тоже типа T)
+    ArraySequence_4(некорректный вывод, >>)
 ListSequence:
-    ListSequence_1(LinkedList_3())
-    ListSequence_3(LinkedList_4())
-    ListSequence_4(некорректный вывод, >>, =, ListSequence_1())
-    GetSubsequence(GetSublist)
-    AppendLS(AppendLL)
-    PrependLS(PrependLL)
-    InsertAtLS(InsertAtLL)
-    Concat(ListSequence_4, AppendLS)
-    LinearTransformationLS(LinearTransformationLL)
-    AddLS(SetLL, +, *, coefficient тоже типа T)
-
+    ListSequence_4(некорректный вывод, >>)
 У Sequence остались:
+    Конструктор, копирующий по указателю (для создания новой матрицы)
+    Пустой конструктор
+    Копирующий конструктор 1 - для перегрузки операторов
+    Копирующий конструктор 2 - для =, как минимум
+    Пустой конструктор с инициализацией - вызывается перед вводом матрицы (сиквенса сиквенсов) после выбора типа
     GetFirst
     GetLast
     Get
     GetLength
     GetAllocatedSize
+    GetSubsequence
+    Append
+    Prepend
+    InsertAs
+    Set
+    Concat
+    LinearTransformation
+    =
+    +
+    -
+    *
+    /
+    +=
+    -=
+    *=
+    /=
     ~Sequence
     <<
-Нужны еще:
-    Конструкторы, копирующие по указателю(для создания новой матрицы), для него нужен только оператор =
-    Set - реализовать, а вместе с ним переопределить = (для линейных преобразований строк)
-    
+
+<T> - где писать?
+понаставить const

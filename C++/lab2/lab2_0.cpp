@@ -16,7 +16,15 @@
 
 class ComplexNumber
 {
+    friend ComplexNumber operator+(ComplexNumber const &first, ComplexNumber const &second);
+    friend ComplexNumber operator-(ComplexNumber const &first, ComplexNumber const &second);
+    friend ComplexNumber operator*(ComplexNumber const &first, ComplexNumber const &second);
+    friend ComplexNumber operator/(ComplexNumber const &first, ComplexNumber &second);
+    friend std::ostream &operator<<(std::ostream &ostream, const ComplexNumber &x);
+    friend std::istream &operator>>(std::istream &istream, ComplexNumber &x);
+
 public:
+    ComplexNumber() : ComplexNumber(0.0, 0.0) {}
     ComplexNumber(double real, double imaginary)
     {
         this->real = real;
@@ -24,83 +32,143 @@ public:
     }
 
     ComplexNumber getConjugate()
-    { //в принципе нужно только для /
+    {
         return ComplexNumber(real, -imaginary);
     }
 
-    ComplexNumber operator +(ComplexNumber x)
+    const ComplexNumber operator-() const
     {
-        return ComplexNumber(this->real + x.real, this->imaginary + x.imaginary);
+        return ComplexNumber(-real, -imaginary);
     }
 
-    ComplexNumber operator *(ComplexNumber x)
+    ComplexNumber &operator+=(const ComplexNumber &x)
     {
-        double newReal = this->real * x.real - this->imaginary * x.imaginary;
-        double newImaginary = this->real * x.imaginary + this->imaginary * x.real;
-        return ComplexNumber(newReal, newImaginary);
+        real += x.real;
+        imaginary += x.imaginary;
+        return *this;
     }
 
-    ComplexNumber operator /(ComplexNumber x)
-    { //паприкола
+    ComplexNumber &operator-=(const ComplexNumber &x)
+    {
+        real -= x.real;
+        imaginary -= x.imaginary;
+        return *this;
+    }
+
+    ComplexNumber &operator*=(const ComplexNumber &x)
+    {
+        real = real * x.real - imaginary * x.imaginary;
+        imaginary = real * x.imaginary + imaginary * x.real;
+        return *this;
+    }
+
+    ComplexNumber &operator/=(ComplexNumber &x)
+    {
         ComplexNumber newNumerator = *this * x.getConjugate();
         double newDenominator = (x * x.getConjugate()).real;
-        double newReal = newNumerator.real / newDenominator;
-        double newImaginary = newNumerator.imaginary / newDenominator;
-        return ComplexNumber(newReal, newImaginary);
+        real = newNumerator.real / newDenominator;
+        imaginary = newNumerator.imaginary / newDenominator;
+        return *this;
     }
 
-    // private:
+private:
     double real;
     double imaginary;
 };
 
-std::ostream &operator <<(std::ostream &ostream, const ComplexNumber &x)
+ComplexNumber operator+(ComplexNumber const &first, ComplexNumber const &second)
+{
+    return ComplexNumber(first.real + second.real, first.imaginary + second.imaginary);
+}
+
+ComplexNumber operator-(ComplexNumber const &first, ComplexNumber const &second)
+{
+    return ComplexNumber(first.real - second.real, first.imaginary - second.imaginary);
+}
+
+ComplexNumber operator*(ComplexNumber const &first, ComplexNumber const &second)
+{
+    double newReal = first.real * second.real - first.imaginary * second.imaginary;
+    double newImaginary = first.real * second.imaginary + first.imaginary * second.real;
+    return ComplexNumber(newReal, newImaginary);
+}
+
+ComplexNumber operator/(ComplexNumber const &first, ComplexNumber &second)
+{
+    ComplexNumber newNumerator = first * second.getConjugate();
+    double newDenominator = (second * second.getConjugate()).real;
+    double newReal = newNumerator.real / newDenominator;
+    double newImaginary = newNumerator.imaginary / newDenominator;
+    return ComplexNumber(newReal, newImaginary);
+}
+
+std::ostream &operator<<(std::ostream &ostream, const ComplexNumber &x)
 {
     return ostream << x.real << " + " << x.imaginary << " * i";
 }
 
-std::istream &operator >>(std::istream &istream, ComplexNumber &x)
+std::istream &operator>>(std::istream &istream, ComplexNumber &x)
 {
-    std::cout << "\t\t" << "Введите действительную и мнимую части числа через пробел:" << std::endl << "\t\t";
+    std::cout << "\t\t"
+              << "Введите действительную и мнимую части числа через пробел:" << std::endl
+              << "\t\t";
     return istream >> x.real >> x.imaginary;
 }
 
 template <class T>
+class ArraySequence;
+
+template <class T>
 class DynamicArray
 {
+    friend class ArraySequence<T>;
 public:
-    DynamicArray(T *items, int count)
-    {
-        this->items = new T[count];
-        memcpy(this->items, items, count * sizeof(T));
-        this->count = count;
-    }
-
-    DynamicArray(int count)//зочем?
-    {
-        items = new T[count];
-        this->count = count;
-    }
-
     DynamicArray()
     {
         items = NULL;
         this->count = 0;
     }
 
-    DynamicArray(const DynamicArray<T> &dynamicArray)
+    DynamicArray(int count)
     {
-        DynamicArray(dynamicArray->items, dynamicArray->count);
+        if (!count)
+        {
+            items = NULL;
+            this->count = 0;
+        }
+        else
+        {
+            items = new T[count];
+            this->count = count;
+        }
+    }
+
+    DynamicArray(T *items, int count) : DynamicArray(count)
+    {
+        if (count)
+        {
+            memcpy(this->items, items, count * sizeof(T));
+        }
+    }
+
+    DynamicArray(T value, int count) : DynamicArray(count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = value;
+        }
+    }
+
+    DynamicArray(const DynamicArray<T> &dynamicArray) : DynamicArray(dynamicArray.items, dynamicArray.count) {}
+
+    int GetSize()
+    {
+        return count;
     }
 
     T Get(int index)
     {
         return items[index];
-    }
-
-    int GetSize()
-    {
-        return count;
     }
 
     void Set(int index, T value)
@@ -115,9 +183,8 @@ public:
         {
             newItems[i] = items[i];
         }
-        delete items;
+        delete[] items;
         items = newItems;
-        // count = newSize;
     }
 
     void InsertAt(int index, T value)
@@ -135,15 +202,12 @@ public:
         items[toIndex] += items[fromIndex] * coefficient;
     }
 
-    void Clear() {//насколько адекватно?
-        delete items;
-        items = NULL;
-        count = 0;
-    }
-
     ~DynamicArray()
     {
-        delete items;
+        if (items)
+        {
+            delete[] items;
+        }
     }
 
 private:
@@ -159,11 +223,10 @@ class ItemOfList
 {
     friend class LinkedList<T>;
 
-public:
-    // private:
+private:
     T data;
-    ItemOfList<T> *next; //!!!
-    ItemOfList<T> *prev; //!!!
+    ItemOfList<T> *next;
+    ItemOfList<T> *prev;
 
     ItemOfList(T data, ItemOfList *next, ItemOfList *prev)
     {
@@ -174,53 +237,81 @@ public:
 };
 
 template <class T>
+class ListSequence;
+
+template <class T>
 class LinkedList
 {
+    friend class ListSequence<T>;
 public:
-    LinkedList(ItemOfList<T> *head, ItemOfList<T> *tail, int count)
-    {
-        this->head = head;
-        this->tail = tail;
-        this->count = count;
-    }
-
     LinkedList()
     {
-        LinkedList(NULL, NULL, 0);
+        head = NULL;
+        tail = NULL;
+        count = 0;
     }
 
-    LinkedList(T *items, int count) //мыбы реализовать через append?
+    LinkedList(T *items, int count)
     {
 
         if (!count)
         {
-            LinkedList();
+            head = NULL;
+            tail = NULL;
+            this->count = 0;
         }
         else
         {
-            ItemOfList<T> *head = new ItemOfList<T>(items[0], NULL, NULL);
-            ItemOfList<T> *last = head;
+            ItemOfList<T> *first = new ItemOfList<T>(items[0], NULL, NULL);
+            ItemOfList<T> *last = first;
             for (int i = 1; i < count; i++)
             {
-                last->next = new ItemOfList(ItemOfList<T>(items[i], NULL, last));
+                last->next = new ItemOfList<T>(items[i], NULL, last);
                 last = last->next;
             }
-            LinkedList(head, tail, count);
+            head = first;
+            tail = last;
+            this->count = count;
         }
     }
 
-    LinkedList(const LinkedList<T> &list) //мыбы тоже через append?
+    LinkedList(T value, int count)
+    {
+        if (!count)
+        {
+            head = NULL;
+            tail = NULL;
+            this->count = 0;
+        }
+        else
+        {
+            ItemOfList<T> *first = new ItemOfList<T>(value, NULL, NULL);
+            ItemOfList<T> *last = first;
+            for (int i = 1; i < count; i++)
+            {
+                last->next = new ItemOfList<T>(value, NULL, last);
+                last = last->next;
+            }
+            head = first;
+            tail = last;
+            this->count = count;
+        }
+    }
+
+    LinkedList(const LinkedList<T> &list)
     {
         ItemOfList<T> *cur = list.head;
         if (!cur)
         {
-            LinkedList();
+            head = NULL;
+            tail = NULL;
+            this->count = 0;
         }
         else
         {
-            ItemOfList<T> *head = new ItemOfList<T>(cur->data, NULL, NULL);
+            ItemOfList<T> *first = new ItemOfList<T>(cur->data, NULL, NULL);
             // cur = cur->next;
-            ItemOfList<T> *last = head;
+            ItemOfList<T> *last = first;
             for (int i = 1; i < list.count; i++)
             {                    // while(cur) {}
                 cur = cur->next; //убрать
@@ -228,7 +319,9 @@ public:
                 last = last->next;
                 // cur = cur->next;
             }
-            LinkedList(head, tail, count);
+            head = first;
+            tail = last;
+            this->count = count;
         }
     }
 
@@ -252,19 +345,14 @@ public:
         return cur->data;
     }
 
-    LinkedList<T> *GetSubList(int startIndex, int endIndex)
+    LinkedList<T> *GetSubList(int startIndex, int endIndex) //!!!
     {
-        ItemOfList<T> *start = head;
-        ItemOfList<T> *end = head;
-        for (int i = 1; i <= startIndex; i++)
+        LinkedList<T> *res = new LinkedList();
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            start = start->next;
+            res->Append(Get(i));
         }
-        for (int i = 1; i <= endIndex; i++)
-        {
-            end = end->next;
-        }
-        return LinkedList(LinkedList(start, end, endIndex - startIndex));
+        return res;
     }
 
     int GetLength()
@@ -338,7 +426,7 @@ public:
 
     LinkedList<T> *Concat(LinkedList<T> *list) //а зочем?..
     {
-        LinkedList<T> *res = new LinkedList<T>(this);
+        LinkedList<T> *res = new LinkedList<T>(*this);
         for (int i = 0; i < list->count; i++)
         {
             res->Append(list->Get(i));
@@ -351,18 +439,6 @@ public:
         Set(toIndex, Get(toIndex) + Get(fromIndex) * coefficient);
     }
 
-    void Clear() {
-        ItemOfList<T> *cur = tail;
-        while (cur != NULL)
-        {
-            cur = cur->prev;
-            delete cur->next;
-        }
-        head = NULL;
-        tail = NULL;
-        count = 0;
-    }
-
     ~LinkedList()
     {
         ItemOfList<T> *cur = tail;
@@ -373,7 +449,7 @@ public:
         }
     }
 
-    // private:
+private:
     ItemOfList<T> *head;
     ItemOfList<T> *tail;
     int count;
@@ -383,17 +459,19 @@ template <class T>
 class Sequence
 {
 public:
+    virtual int GetLength() = 0;
+
+    virtual int GetAllocatedSize() = 0;
+
     virtual T GetFirst() = 0;
 
     virtual T GetLast() = 0;
 
     virtual T Get(int index) = 0;
 
-    virtual int GetLength() = 0;
-
-    virtual int GetAllocatedSize() = 0;
-
     virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) = 0;
+
+    virtual Sequence<T> *Copy() = 0;
 
     virtual void Append(T value) = 0;
 
@@ -403,62 +481,118 @@ public:
 
     virtual void Set(int index, T value) = 0;
 
-    virtual Sequence<T> *Concat(Sequence<T> *list) = 0;
+    void Permutate(int firstIndex, int secondIndex)
+    {
+        T bubble = Get(firstIndex);
+        Set(firstIndex, Get(secondIndex));
+        Set(secondIndex, bubble);
+    }
 
     virtual void LinearTransformation(int fromIndex, T coefficient, int toIndex) = 0;
 
-    virtual Sequence<T> &operator =(Sequence<T> x) = 0;
+    virtual Sequence<T> *Concat(Sequence<T> *list) = 0;
 
-    virtual Sequence<T> operator +(Sequence<T> x) = 0;
+    virtual Sequence<T> &operator=(Sequence<T> &x) = 0;
 
-    virtual Sequence<T> operator -(Sequence<T> x) = 0;
+    virtual const Sequence<T> operator-() = 0;
 
-    virtual Sequence<T> operator *(T coefficient) = 0;
+    virtual const Sequence<T> operator+(Sequence<T> &x) = 0;
 
-    virtual Sequence<T> operator /(T coefficient) = 0;
+    virtual const Sequence<T> operator-(Sequence<T> &x) = 0;
 
-    virtual Sequence<T> &operator +=(Sequence<T> x) = 0;
+    virtual const Sequence<T> operator*(T coefficient) = 0;
 
-    virtual Sequence<T> &operator -=(Sequence<T> x) = 0;
+    virtual const Sequence<T> operator/(T coefficient) = 0;
 
-    virtual Sequence<T> &operator *=(T coefficient) = 0;
+    Sequence<T> &operator+=(Sequence<T> &x)
+    {
+        for (int i = 0; i < GetLength(); i++)
+        {
+            Set(i, Get(i) + x.Get(i));
+        }
+        return *this;
+    }
 
-    virtual Sequence<T> &operator /=(T coefficient) = 0;
+    Sequence<T> &operator-=(Sequence<T> &x)
+    {
+        for (int i = 0; i < GetLength(); i++)
+        {
+            Set(i, Get(i) + x.Get(i));
+        }
+        return *this;
+    }
 
-    virtual void Clear() = 0;
+    Sequence<T> &operator*=(T coefficient)
+    {
+        for (int i = 0; i < GetLength(); i++)
+        {
+            Set(i, Get(i) * coefficient);
+        }
+        return *this;
+    }
+
+    Sequence<T> &operator/=(T coefficient)
+    {
+        for (int i = 0; i < GetLength(); i++)
+        {
+            Set(i, Get(i) / coefficient);
+        }
+        return *this;
+    }
 
     virtual ~Sequence() = 0;
 };
+
+//Sequence<class T>::~Sequence() {}
 
 template <class T>
 class ArraySequence : Sequence<T>
 {
 public:
-    ArraySequence(T *items, int count)
-    {
-        buffer = new DynamicArray<T>(items, count);
-        allocated_size = count;
-    }
-
     ArraySequence()
     {
         buffer = new DynamicArray<T>();
         allocated_size = 0;
     }
 
+    ArraySequence(T *items, int count)
+    {
+        buffer = new DynamicArray<T>(items, count);
+        allocated_size = count;
+    }
+
+    ArraySequence(T value, int count)
+    {
+        buffer = new DynamicArray<T>(value, count);
+        allocated_size = count;
+    }
+
     ArraySequence(const DynamicArray<T> &dynamicArray)
     {
         buffer = new DynamicArray<T>(dynamicArray);
-        allocated_size = dynamicArray->count;
+        allocated_size = dynamicArray.count;
     }
 
-    ArraySequence(int count) {
-        T items[count];
-        std::cout << '\t' << "Введите " << count << " чисел:" << std::endl;
-        for(int i = 0; i < count; i++) {
-            std::cin >> items[i];
+    ArraySequence(const Sequence<T> &sequence)
+    {
+        const ArraySequence<T> &arraySequence = dynamic_cast<const ArraySequence<T> &>(sequence);
+
+        buffer = new DynamicArray<T>(sequence.GetAllocatedSize());
+        allocated_size = sequence.GetAllocatedSize();
+        for (int i = 0; i < sequence.GetLength(); i++)
+        {
+            Set(i, sequence.Get(i));
         }
-        ArraySequence(items, count);
+    }
+
+    virtual int GetLength() override
+    {
+        return buffer->count;
+    }
+
+    virtual int GetAllocatedSize() override
+    {
+        return allocated_size;
     }
 
     virtual T GetFirst() override
@@ -476,19 +610,14 @@ public:
         return buffer->Get(index);
     }
 
-    virtual int GetLength() override
-    {
-        return buffer->count;
-    }
-
-    virtual int GetAllocatedSize() override
-    {
-        return allocated_size;
-    }
-
     virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) override
     {
-        return new DynamicArray(buffer->items + startIndex, endIndex - startIndex);
+        return new ArraySequence<T>(DynamicArray<T>(buffer->items + startIndex, endIndex - startIndex));
+    }
+
+    virtual Sequence<T> *Copy() override
+    {
+        return new ArraySequence<T>(*this);
     }
 
     virtual void Append(T value) override
@@ -499,7 +628,7 @@ public:
         }
         else if (buffer->count == allocated_size)
         {
-            buffer->Resize(buffer->GetSize() * 2);
+            buffer->Resize(buffer->count * 2);
         }
         buffer->InsertAt(buffer->count, value);
     }
@@ -512,7 +641,7 @@ public:
         }
         else if (buffer->count == allocated_size)
         {
-            buffer->Resize(buffer->GetSize() * 2);
+            buffer->Resize(buffer->count * 2);
         }
         buffer->InsertAt(0, value);
     }
@@ -525,7 +654,7 @@ public:
         }
         else if (buffer->count == allocated_size)
         {
-            buffer->Resize(buffer->GetSize() * 2);
+            buffer->Resize(buffer->count * 2);
         }
         buffer->InsertAt(index, value);
     }
@@ -535,9 +664,14 @@ public:
         buffer->Set(index, value);
     }
 
+    virtual void LinearTransformation(int fromIndex, T coefficient, int toIndex) override
+    {
+        buffer->LinearTransformation(fromIndex, coefficient, toIndex);
+    }
+
     virtual Sequence<T> *Concat(Sequence<T> *list) override
     {
-        ArraySequence<T> *res = new ArraySequence<T>(buffer);
+        ArraySequence<T> *res = new ArraySequence<T>(*buffer);
         for (int i = 0; i < list->GetLength(); i++)
         {
             res->Append(list->Get(i));
@@ -545,96 +679,64 @@ public:
         return res;
     }
 
-    virtual void LinearTransformation(int fromIndex, T coefficient, int toIndex) override
+    virtual Sequence<T> &operator=(Sequence<T> &x) override
     {
-        buffer->LinearTransformation(fromIndex, coefficient, toIndex);
+        ArraySequence<T> temp = ArraySequence<T>(x);
+        Swap(temp);
+        return *this;
     }
 
-    virtual Sequence<T> &operator =(Sequence<T> x) override
+    virtual const Sequence<T> operator-() override
     {
-        Clear();
-        allocated_size = x.GetAllocatedSize;
-        buffer->Resize(allocated_size);
-        for(int i = 0; i < x->GetLength(); i++) {
-            Append(x.Get(i));
+        Sequence<T> *res = new ArraySequence(*buffer);
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Set(i, -Get(i));
         }
+        return *res;
     }
 
-    virtual Sequence<T> operator +(Sequence<T> x) override
+    virtual const Sequence<T> operator+(Sequence<T> &x) override
     {
-        Sequence<T> res = ArraySequence(buffer);
-        for(int i = 0; i < res->GetLength; i++) {
-            res->Set(i, Get(i) + x->Get(i));
+        Sequence<T> *res = new ArraySequence(*buffer);
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Set(i, Get(i) + x.Get(i));
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator -(Sequence<T> x) override
+    virtual const Sequence<T> operator-(Sequence<T> &x) override
     {
-        Sequence<T> res = ArraySequence(buffer);
-        for(int i = 0; i < res->GetLength; i++) {
-            res->Set(i, Get(i) - x->Get(i));
+        Sequence<T> *res = new ArraySequence(*buffer);
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Set(i, Get(i) - x.Get(i));
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator *(T coefficient) override
+    virtual const Sequence<T> operator*(T coefficient) override
     {
-        Sequence<T> res = ArraySequence(buffer);
-        for(int i = 0; i < res->GetLength; i++) {
+        Sequence<T> *res = new ArraySequence(*buffer);
+        for (int i = 0; i < GetLength(); i++)
+        {
             res->Set(i, Get(i) * coefficient);
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator /(T coefficient) override
+    virtual const Sequence<T> operator/(T coefficient) override
     {
-        Sequence<T> res = ArraySequence(buffer);
-        for(int i = 0; i < res->GetLength; i++) {
+        Sequence<T> *res = new ArraySequence(*buffer);
+        for (int i = 0; i < GetLength(); i++)
+        {
             res->Set(i, Get(i) / coefficient);
         }
-        return res;
+        return *res;
     }
 
-        virtual Sequence<T> &operator +=(Sequence<T> x) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) + x->Get(i));
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator -=(Sequence<T> x) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) + x->Get(i));
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator *=(T coefficient) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) * coefficient);
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator /=(T coefficient) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) / coefficient);
-        }
-        return *this;
-    }
-
-    virtual void Clear() override
-    {
-        buffer->Clear;
-        allocated_size = 0;
-    }
-
-    ~ArraySequence()
+    ~ArraySequence() override
     {
         delete buffer;
     }
@@ -642,20 +744,35 @@ public:
 private:
     DynamicArray<T> *buffer;
     int allocated_size;
+
+    void Swap(ArraySequence<T> &array)
+    {
+        DynamicArray<T> *bubble_buffer = buffer;
+        int bubble_allocated_size = allocated_size;
+        buffer = array.buffer;
+        allocated_size = array.allocated_size;
+        array.buffer = bubble_buffer;
+        array.allocated_size = bubble_allocated_size;
+    }
 };
 
 template <class T>
 class ListSequence : Sequence<T>
 {
 public:
+    ListSequence()
+    {
+        buffer = new LinkedList<T>();
+    }
+
     ListSequence(T *items, int count)
     {
         buffer = new LinkedList<T>(items, count);
     }
 
-    ListSequence()
+    ListSequence(T value, int count)
     {
-        buffer = new LinkedList<T>();
+        buffer = new LinkedList<T>(value, count);
     }
 
     ListSequence(const LinkedList<T> &list)
@@ -663,28 +780,13 @@ public:
         buffer = new LinkedList<T>(list);
     }
 
-    ListSequence(int count) {
-        T items[count];
-        std::cout << '\t' << "Введите " << count << " чисел:" << std::endl;
-        for(int i = 0; i < count; i++) {
-            std::cin >> items[i];
-        }
-        ListSequence(items, count);
-    }
-
-    virtual T GetFirst() override
+    ListSequence(const ListSequence<T> &sequence) : ListSequence(*sequence.buffer)
     {
-        return buffer->GetFirst;
-    }
-
-    virtual T GetLast() override
-    {
-        return buffer->GetLast;
-    }
-
-    virtual T Get(int index) override
-    {
-        return buffer->Get(index);
+        /*buffer = new LinkedList<T>();
+        for (int i = 0; i < sequence.GetLength(); i++)
+        {
+            Append(sequence.Get(i));
+        }*/
     }
 
     virtual int GetLength() override
@@ -696,10 +798,30 @@ public:
     {
         return buffer->count;
     }
-    
+
+    virtual T GetFirst() override
+    {
+        return buffer->GetFirst();
+    }
+
+    virtual T GetLast() override
+    {
+        return buffer->GetLast();
+    }
+
+    virtual T Get(int index) override
+    {
+        return buffer->Get(index);
+    }
+
     virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) override
     {
-        return buffer->GetSubList(startIndex, endIndex);
+        return new ListSequence(*buffer->GetSubList(startIndex, endIndex));
+    }
+
+    virtual Sequence<T> *Copy()
+    {
+        return new ListSequence(*this);
     }
 
     virtual void Append(T value) override
@@ -722,9 +844,14 @@ public:
         buffer->Set(index, value);
     }
 
+    virtual void LinearTransformation(int fromIndex, T coefficient, int toIndex) override
+    {
+        buffer->LinearTransformation(fromIndex, coefficient, toIndex);
+    }
+
     virtual Sequence<T> *Concat(Sequence<T> *list) override
     {
-        ListSequence<T> *res = new ListSequence<T>(buffer);
+        ListSequence<T> *res = new ListSequence<T>(*buffer);
         for (int i = 0; i < list->GetLength(); i++)
         {
             res->Append(list->Get(i));
@@ -732,119 +859,258 @@ public:
         return res;
     }
 
-    virtual void LinearTransformation(int fromIndex, T coefficient, int toIndex) override
+    virtual Sequence<T> &operator=(Sequence<T> &x) override
     {
-        buffer->LinearTransformation(fromIndex, coefficient, toIndex);
+        ListSequence<T> temp = ListSequence<T>(x);
+        Swap(temp);
+        return *this;
     }
 
-    virtual Sequence<T> &operator =(Sequence<T> x) override
+    virtual const Sequence<T> operator-() override
     {
-        Clear();
-        for(int i = 0; i < x->GetLength(); i++) {
-            Append(x.Get(i));
+        Sequence<T> *res = new ListSequence();
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Append(-Get(i));
         }
+        return *res;
     }
 
-    virtual Sequence<T> operator +(Sequence<T> x) override
+    virtual const Sequence<T> operator+(Sequence<T> &x) override
     {
-        Sequence<T> res = ListSequence();
-        for(int i = 0; i < res->GetLength; i++) {
-            res->Append(Get(i) + x->Get(i));
+        Sequence<T> *res = new ListSequence();
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Append(Get(i) + x.Get(i));
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator -(Sequence<T> x) override
+    virtual const Sequence<T> operator-(Sequence<T> &x) override
     {
-        Sequence<T> res = ListSequence();
-        for(int i = 0; i < res->GetLength; i++) {
-            res->Append(Get(i) - x->Get(i));
+        Sequence<T> *res = new ListSequence();
+        for (int i = 0; i < GetLength(); i++)
+        {
+            res->Append(Get(i) - x.Get(i));
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator *(T coefficient) override
+    virtual const Sequence<T> operator*(T coefficient) override
     {
-        Sequence<T> res = ListSequence();
-        for(int i = 0; i < res->GetLength; i++) {
+        Sequence<T> *res = new ListSequence();
+        for (int i = 0; i < GetLength(); i++)
+        {
             res->Append(Get(i) * coefficient);
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> operator /(T coefficient) override
+    virtual const Sequence<T> operator/(T coefficient) override
     {
-        Sequence<T> res = ListSequence();
-        for(int i = 0; i < res->GetLength; i++) {
+        Sequence<T> *res = new ListSequence();
+        for (int i = 0; i < GetLength(); i++)
+        {
             res->Append(Get(i) / coefficient);
         }
-        return res;
+        return *res;
     }
 
-    virtual Sequence<T> &operator +=(Sequence<T> x) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) + x->Get(i));
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator -=(Sequence<T> x) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) + x->Get(i));
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator *=(T coefficient) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) * coefficient);
-        }
-        return *this;
-    }
-
-    virtual Sequence<T> &operator /=(T coefficient) override
-    {
-        for(int i = 0; i < buffer->count; i++) {
-            buffer->Set(i, Get(i) / coefficient);
-        }
-        return *this;
-    }
-
-    virtual void Clear() override
-    {
-        buffer->Clear;
-    }
-
-    ~ListSequence()
+    ~ListSequence() override
     {
         delete buffer;
     }
 
 private:
     LinkedList<T> *buffer;
+
+    void Swap(ListSequence<T> &list)
+    {
+        LinkedList<T> *bubble_buffer = buffer;
+        buffer = list.buffer;
+        list.buffer = bubble_buffer;
+    }
 };
 
-template <class T> std::ostream &operator <<(std::ostream &ostream, const Sequence<T> &sequence)
+template <class T>
+std::ostream &operator<<(std::ostream &ostream, const Sequence<T> &sequence)
 {
-    for(int i = 0; i < sequence.GetLength; i++) {
+    for (int i = 0; i < sequence.GetLength(); i++)
+    {
         ostream << sequence.Get(i) << " ";
     }
-    ostream << std::endl;
     return ostream;
 }
 
-template <class T> class RectangularMatrix {
-    private:
-        int m, n;
-        //Sequence <S
+template <class T>
+std::istream &operator>>(std::istream &istream, Sequence<T> &sequence)
+{
+    for (int i = 0; i < sequence.GetLength(); i++)
+    {
+        T value = sequence.Get(i);
+        istream >> value;
+        sequence.Set(i, value);
+    }
+    return istream;
+}
+
+template <class T>
+class RectangularMatrix
+{
+    template <T> friend std::ostream &operator<<(std::ostream &ostream, const RectangularMatrix<T> &rectangularMatrix);
+    template <T> friend std::istream &operator>>(std::istream &istream, RectangularMatrix<T> &rectangularMatrix);
+    template <T> friend const RectangularMatrix<T> operator+(RectangularMatrix<T> &x1, RectangularMatrix<T> &x2);
+    template <T> friend const RectangularMatrix<T> operator*(RectangularMatrix<T> &x, T coefficient);
+
+public:
+    RectangularMatrix()
+    {
+        rows = NULL;
+        m = 0;
+        n = 0;
+    }
+    RectangularMatrix(Sequence<T> *new_rows) : RectangularMatrix() //не копирует; если не пустой сиквенс, то rows = NULL
+    {
+        if (!new_rows->GetLength())
+        {
+            rows = new_rows;
+        }
+    }
+
+    RectangularMatrix(const RectangularMatrix<T> &rectangularMatrix)
+    {
+        rows = rectangularMatrix.rows->Copy();
+        m = rectangularMatrix->m;
+        n = rectangularMatrix->n;
+    }
+
+    void RowPermutate(int firstIndex, int secondIndex)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            rows->Permutate(firstIndex * n + i, secondIndex * n + i);
+        }
+    }
+
+    void ColumnPermutate(int firstIndex, int secondIndex)
+    {
+        for (int i = 0; i < m; i++)
+        {
+            rows->Permutate(firstIndex + i * n, secondIndex + i * n);
+        }
+    }
+
+    void RowMultiple(int index, T coefficient)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            rows->Set(index * n + i, rows->Get(index * n + i) * coefficient);
+        }
+    }
+
+    void ColumnPermutate(int index, T coefficient)
+    {
+        for (int i = 0; i < m; i++)
+        {
+            rows->Set(index + i * n, rows->Get(index + i * n) * coefficient);
+        }
+    }
+
+    void RowLinearTransformation(int fromIndex, T coefficient, int toIndex)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            rows->LinearTransformation(fromIndex * n + i, coefficient, toIndex * n + i);
+        }
+    }
+
+    void ColumnPermutate(int fromIndex, T coefficient, int toIndex)
+    {
+        for (int i = 0; i < m; i++)
+        {
+            rows->LinearTransformation(fromIndex + i * n, coefficient, toIndex + i * n);
+        }
+    }
+
+    RectangularMatrix<T> &operator=(RectangularMatrix<T> &rectangularMatrix)
+    {
+        delete rows;
+        rows = rectangularMatrix.rows->Copy();
+        m = rectangularMatrix->m;
+        n = rectangularMatrix->n;
+        return *this;
+    }
+
+    ~RectangularMatrix()
+    {
+        if (rows)
+        {
+            delete rows;
+        }
+    }
+
+private:
+    int m, n;
+    Sequence<T> *rows;
 };
+
+template <class T>
+const RectangularMatrix<T> operator+(RectangularMatrix<T> &x1, RectangularMatrix<T> &x2) //тот же тип, что и x1
+{
+    RectangularMatrix sumMatrix = RectangularMatrix(x1);
+    *sumMatrix.rows += *x2.rows;
+    return sumMatrix;
+}
+
+template <class T>
+const RectangularMatrix<T> operator*(RectangularMatrix<T> &x, T coefficient)
+{
+    RectangularMatrix sumMatrix = RectangularMatrix(x);
+    *sumMatrix.rows *= coefficient;
+    return sumMatrix;
+}
+
+template <class T>
+std::ostream &operator<<(std::ostream &ostream, const RectangularMatrix<T> &rectangularMatrix)
+{
+    for (int i = 0; i < rectangularMatrix.m; i++)
+    {
+        for (int j = 0; j < rectangularMatrix.n; j++)
+        {
+            ostream << rectangularMatrix.rows->Get(i * rectangularMatrix.n + j) << "  ";
+        }
+        ostream << std::endl;
+    }
+    return ostream;
+}
+
+template <class T>
+std::istream &operator>>(std::istream &istream, RectangularMatrix<T> &rectangularMatrix)
+{
+    int m = 0, n = 0;
+    std::cout << "Введите количество строк матрицы:" << std::endl;
+    istream >> m;
+    std::cout << "Введите количество столбцов матрицы:" << std::endl;
+    istream >> n;
+    T value;
+    for (int i = 0; i < n; i++)
+    {
+        std::cout << std::endl
+                  << "Введите " << n << " элементов строки номер " << i << ":" << std::endl;
+        for (int j = 0; j < m; j++)
+        {
+            istream >> value;
+            rectangularMatrix.rows->Append(value);
+        }
+    }
+    return istream;
+}
 
 int main()
 {
-    int a[2] = {2, 3};
+    ArraySequence <int> *a = new ArraySequence<int>(5, 5);
+    ListSequence <ComplexNumber> *b = new ListSequence<ComplexNumber>(ComplexNumber(2.5, 7.5), 3);
+    /*int a[2] = {2, 3};
     int b[0];
     LinkedList<int> list1(a, 2);
     LinkedList<int> list2(list1);
@@ -854,6 +1120,6 @@ int main()
     std::cout << list1.tail->data << " " << (bool)list1.tail->next << " " << (bool)list1.tail->prev << std::endl;
     std::cout << list2.head->data << " " << (bool)list2.head->next << " " << (bool)list2.head->prev << " ";
     std::cout << list2.tail->data << " " << (bool)list2.tail->next << " " << (bool)list2.tail->prev << std::endl;
-    std::cout << (bool)list3.head << " " << (bool)list3.tail << std::endl;
+    std::cout << (bool)list3.head << " " << (bool)list3.tail << std::endl;*/
     return 0;
 }

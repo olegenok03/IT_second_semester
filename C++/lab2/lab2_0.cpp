@@ -826,7 +826,7 @@ public:
     {
         LinkedList<T> *subList = buffer->GetSubList(startIndex, endIndex);
         Sequence<T> *res = new ListSequence(*subList);
-        //delete subList;
+        delete subList;
         return res;
     }
 

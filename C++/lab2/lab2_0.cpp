@@ -823,7 +823,10 @@ public:
 
     virtual Sequence<T> *GetSubsequence(int startIndex, int endIndex) const override
     {
-        return new ListSequence(*buffer->GetSubList(startIndex, endIndex));
+        LinkedList<T> *subList = buffer->GetSubList(startIndex, endIndex);
+        Sequence<T> *res = new ListSequence(*subList);
+        delete subList;
+        return res;
     }
 
     virtual Sequence<T> *Copy() const override
@@ -1039,7 +1042,7 @@ private:
 template <class T>
 const RectangularMatrix<T> operator+(RectangularMatrix<T> &x1, RectangularMatrix<T> &x2) //тот же тип, что и x1
 {
-    RectangularMatrix sumMatrix = RectangularMatrix(x1);
+    RectangularMatrix<T> sumMatrix = RectangularMatrix<T>(x1);
     *sumMatrix.rows += *x2.rows;
     return sumMatrix;
 }
@@ -1047,7 +1050,7 @@ const RectangularMatrix<T> operator+(RectangularMatrix<T> &x1, RectangularMatrix
 template <class T>
 const RectangularMatrix<T> operator*(RectangularMatrix<T> &x, T coefficient)
 {
-    RectangularMatrix sumMatrix = RectangularMatrix(x);
+    RectangularMatrix<T> sumMatrix = RectangularMatrix<T>(x);
     *sumMatrix.rows *= coefficient;
     return sumMatrix;
 }
